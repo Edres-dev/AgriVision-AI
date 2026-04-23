@@ -1,0 +1,42 @@
+version: '3.9'
+
+services:
+
+  frontend:
+    build: ./frontend
+    container_name: agrivision_frontend
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./frontend:/app
+      - ./data:/app/data
+    environment:
+      - BACKEND_URL=http://api:8000
+    depends_on:
+      - api
+    command: streamlit run app.py --server.port=8501 --server.address=0.0.0.0
+  api:
+    build: ./backend
+    container_name: agrivision_api
+    ports:
+      - "8000:8000"
+      - "8888:8888"
+    volumes:
+      - ./backend:/app
+      - ./data:/app/data        # <--- أضف هذا السطر لربط البيانات
+      - ./notebooks:/app/notebooks
+    env_file:
+      - .env  # هذا السطر يخبر دوكر أن يقرأ الملف ويمرره للكود
+    depends_on:
+      - db
+
+  db:
+    image: postgres:15
+    container_name: agrivision_db
+    restart: always
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+      POSTGRES_DB: agrivision
+    ports:
+      - "5432:5432"
